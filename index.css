@@ -1,6 +1,6 @@
 html{
    font-family: "Saira Medium";
-   background-color: #ddffff;
+   background: linear-gradient(#cccccc,#ffffff);
 }
 
 .tooltip{
@@ -42,19 +42,37 @@ html{
    top: 0px;
 }
 
-.small{
-   font-size: 13px;
-}
-
-.anal>button{
+.a1{
    border-radius: 6px;
    background-color: #d9f;
    transition-duration: 0.2s;
 }
 
-.anal>button:hover {
+.a1:hover {
    border-radius: 7px;
    background-color: #d4f;
+}
+
+.a2 {
+   border-radius: 6px;
+   background-color: #88f;
+   transition-duration: 0.2s;
+}
+
+.a2:hover {
+   border-radius: 7px;
+   background-color: #44f;
+}
+
+.a3 {
+   border-radius: 6px;
+   background-color: #5af;
+   transition-duration: 0.2s;
+}
+
+.a3:hover {
+   border-radius: 7px;
+   background-color: #25f;
 }
 
 .d{
@@ -63,6 +81,7 @@ html{
    color: #fff;
    transition-duration: 0.2s;
 }
+
 
 .d:hover{
    background-color: #e15;

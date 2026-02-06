@@ -1,4 +1,5 @@
-;const FSbounded = (FS,compare,seq,low)=>{
+h = [];
+const FSbounded = (FS, compare, seq, low) => {
    var res,n=0
    while(true){
       res = FS(seq,n)
@@ -112,22 +113,36 @@ register.forEach((notation,index)=>{
             extras.forEach(expand_extra)
          }
          , a(b, c) { 
-            return b+" // <span class=\"small\">"+(typeof(c)=="undefined"?"???":c[0])+"</span>"
+            if (h.includes(b)) {
+               return "..."
+            } else { return b + " / <span>" + c + "</span>" }
          },
          change_anal(e) {
-            console.log(this.anal)
-            this.anal[0] = window.prompt("Change the analysus of " + this.display(e) + " to...")
+               console.log(this.anal)
+               this.anal[0] = window.prompt("Change the analysus of " + this.display(e) + " to...")
+         },
+         hide(e) {
+            if (h.includes(e)) {
+               g = h.indexOf(e)
+               h = h.splice(1,g-1).concat(h.splice(g+1,h.length))
+            } else {
+               h = h.concat(e)
+            }
          }
       }
-      , template:`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()"><span v-html="a(display(expr),anal)"></span>
-            <div class="anal"><button @mousedown="expand">Expand</button><button @mousedown="change_anal(expr)">Change analysis</button><span></div>
+      , template: `<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()"><span v-html="a(display(expr),anal)"></span>
+            <div class="anal">
+            <button class="a1" @mousedown="expand">Expand</button>
+            <button class="a2" @mousedown="change_anal(expr)">Change analysis</button>
+            <button class="a3" @mousedown="hide(display(expr))" @mouseup="recalculate">Show/Hide</button>
+            <span></div>
             <div class="tooltip" v-if="tooltip" :style="tooltipX" @mousedown.stop>
             <span v-html="display(expr)"></span> fundamental sequence:
             <div v-for="term in shownFS" v-html="term"></div>
          </div></div></div>
          </span>
          <ul>
-            <`+notation.id+`-list v-for="subitem in subitems" v-bind="subitem"></`+notation.id+`-list>
+            <`+ notation.id + `-list v-for="subitem in subitems" v-bind="subitem"></` + notation.id + `-list>
          </ul>
       </li>`
    })
