@@ -191,10 +191,10 @@ register.push({
       }
    })()
    ,init:()=>[
-      {expr:Infinity,low:[[-1,[0,[0,-1,-2],-2],-2]],subitems:[]}
-      ,{expr:[-1,[0,[0,-1,-2],-2],-2],low:[[-1,[0,0,-2],-2]],subitems:[]}
-      ,{expr:[-1,[0,0,-2],-2],low:[[-1,0,-2]],subitems:[]}
-      ,{expr:[-1,0,-2],low:[-1],subitems:[]}
-      ,{expr:-1,low:[-1],subitems:[]}
+      { expr: Infinity, low: [[-1, [0, [0, -1, -2], -2], -2]], subitems: [], anal: ["???"] }
+      , { expr: [-1, [0, [0, -1, -2], -2], -2], low: [[-1, [0, 0, -2], -2]], subitems: [], anal: ["???"] }
+      , { expr: [-1, [0, 0, -2], -2], low: [[-1, 0, -2]], subitems: [], anal: ["???"] }
+      , { expr: [-1, 0, -2], low: [-1], subitems: [], anal: ["???"] }
+      , { expr: -1, low: [-1], subitems: [], anal: ["0"] }
    ]
 })

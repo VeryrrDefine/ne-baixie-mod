@@ -108,8 +108,8 @@
       }
    })()
    ,init:()=>([
-      {expr:[[Infinity]],low:[[]],subitems:[]}
-      ,{expr:[],low:[[]],subitems:[]}
+      { expr: [[Infinity]], low: [[]], subitems: [], anal: ["lowkey what are even those variables"] }
+      , { expr: [], low: [[]], subitems: [], anal: ["0"] }
    ])
    ,semiable:m=>m.length>0
 })

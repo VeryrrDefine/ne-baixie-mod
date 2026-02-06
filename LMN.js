@@ -178,8 +178,8 @@ register.push({
       }
    })()
    ,init:()=>([
-      {expr:[true,Infinity],low:[[true,0,0]],subitems:[]}
-      ,{expr:[true,0,0],low:[0],subitems:[]}
-      ,{expr:0,low:[0],subitems:[]}
+      { expr: [true, Infinity], low: [[true, 0, 0]], subitems: [], anal: ["???"] }
+      , { expr: [true, 0, 0], low: [0], subitems: [], anal: ["???"] }
+      , { expr: 0, low: [0], subitems: [], anal: ["0"] }
    ])
 })

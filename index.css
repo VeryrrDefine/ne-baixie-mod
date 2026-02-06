@@ -1,7 +1,12 @@
+html{
+   font-family: "Saira Medium";
+   background-color: #ddffff;
+}
+
 .tooltip{
    display: inline-block;
    position: absolute;
-   z-index: 1073741824;
+   z-index: 1073741822;
    bottom: 100%;
    padding: 2px 5px;
    background-color: #dfd;
@@ -9,6 +14,7 @@
 }
 .shown-item{
    position: relative;
+   text-align: left;
 }
 .shown-item:hover{
    background-color: #cff;
@@ -26,4 +32,38 @@
 }
 .nowrap{
    white-space: nowrap;
+}
+
+.anal{
+   text-align: left;
+   position: absolute;
+   right: 0px;
+   z-index: 1073741823;
+   top: 0px;
+}
+
+.small{
+   font-size: 13px;
+}
+
+.anal>button{
+   border-radius: 6px;
+   background-color: #d9f;
+   transition-duration: 0.2s;
+}
+
+.anal>button:hover {
+   border-radius: 7px;
+   background-color: #d4f;
+}
+
+.d{
+   background-color: #d26;
+   border-radius: 6px;
+   color: #fff;
+   transition-duration: 0.2s;
+}
+
+.d:hover{
+   background-color: #e15;
 }

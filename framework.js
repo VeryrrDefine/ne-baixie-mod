@@ -49,7 +49,7 @@
 })
 register.forEach((notation,index)=>{
    app.component(notation.id+'-list',{
-      props:['expr','low','subitems']
+      props:['expr','low','subitems','anal']
       ,data:()=>({
          display:notation.display
          ,able:notation.able
@@ -69,7 +69,7 @@ register.forEach((notation,index)=>{
             ,nmax=this.$root.FS_shown[index]
             for(var n=0;n<=nmax;++n) res.push(n+':&nbsp;'+this.display(FS(this.expr,n)))
             this.shownFS = res
-            this.tooltipX = {left:(event.offsetX+15)+'px'}
+            this.tooltipX = {left:'0px'}
             this.tooltip = true
          }
          ,unshow(){
@@ -84,7 +84,8 @@ register.forEach((notation,index)=>{
                   item.subitems.unshift({
                      expr:FSbounded(FS,this.compare,item.expr,working_low)
                      ,low:JSON.parse(JSON.stringify(working_low))
-                     ,subitems:[]
+                     , subitems: []
+                     , anal: ["???"]
                   })
                   working_low = [item.subitems[0].expr]
                }
@@ -94,7 +95,8 @@ register.forEach((notation,index)=>{
                if(!(this.able(item.expr)&&extras.add(item)||this.semiable&&this.semiable(item.expr)&&this.compare(FS(item.expr,0),item.low[0])>0)) return;
                var newitem={
                   expr:FSbounded(FS,this.compare,item.expr,item.low)
-                  ,low:JSON.parse(JSON.stringify(item.low))
+                  , low: JSON.parse(JSON.stringify(item.low))
+                  ,anal: ["???"]
                   ,subitems:[]
                }
                append.splice(append.map(x=>JSON.stringify(x.expr)).indexOf(JSON.stringify(item.expr))+1,0,newitem)
@@ -103,18 +105,27 @@ register.forEach((notation,index)=>{
                   expand_tier(tier,newitem,JSON.stringify(append[append.length-1].expr)===JSON.stringify(newitem.expr)?append:newitem.subitems)
                   tier>1&&expand_tier(tier-1,newitem.subitems.length?newitem.subitems[newitem.subitems.length-1]:newitem,newitem.subitems)
                }
-            }
+               }
             ,extras=new Set()
             ,parentsubs = this.$parent.subitems
             expand_tier(this.$root.tier[index],this,JSON.stringify(parentsubs[parentsubs.length-1].expr)===JSON.stringify(this.expr)?parentsubs:this.subitems)
             extras.forEach(expand_extra)
          }
+         , a(b, c) { 
+            return b+" // <span class=\"small\">"+(typeof(c)=="undefined"?"???":c[0])+"</span>"
+         },
+         change_anal(e) {
+            console.log(this.anal)
+            this.anal[0] = window.prompt("Change the analysus of " + this.display(e) + " to...")
+         }
       }
-      ,template:`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()" @mousedown="expand"><span v-html="display(expr)"></span>
+      , template:`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()"><span v-html="a(display(expr),anal)"></span>
+            <div class="anal"><button @mousedown="expand">Expand</button><button @mousedown="change_anal(expr)">Change analysis</button><span></div>
             <div class="tooltip" v-if="tooltip" :style="tooltipX" @mousedown.stop>
             <span v-html="display(expr)"></span> fundamental sequence:
             <div v-for="term in shownFS" v-html="term"></div>
-         </div></div>
+         </div></div></div>
+         </span>
          <ul>
             <`+notation.id+`-list v-for="subitem in subitems" v-bind="subitem"></`+notation.id+`-list>
          </ul>

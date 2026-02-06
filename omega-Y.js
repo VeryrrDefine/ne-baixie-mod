@@ -256,9 +256,9 @@
          return dataalter[datakey][FSterm] = omega_Y_limit(seq,FSterm)
       }
       ,init:()=>([
-         {expr:[Infinity],low:[[1]],subitems:[]}
-         ,{expr:[1],low:[[]],subitems:[]}
-         ,{expr:[],low:[[]],subitems:[]}
+         {expr:[Infinity],low:[[1]],subitems:[],anal:["???"]}
+         ,{expr:[1],low:[[]],subitems:[],anal:["1"]}
+         ,{expr:[],low:[[]],subitems:[],anal:["0"]}
       ])
    })
 })()

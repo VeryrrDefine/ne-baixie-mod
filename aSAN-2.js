@@ -105,8 +105,8 @@ register.push({
       }
    })()
    ,init:()=>([
-      {expr:[1,Infinity],low:[1],subitems:[]}
-      ,{expr:1,low:[1],subitems:[]}
+      {expr:[1,Infinity],low:[1],subitems:[],anal:["???"]}
+      ,{expr:1,low:[1],subitems:[],anal:["0"]}
    ])
    ,semiable:aSAN_semiable
 })

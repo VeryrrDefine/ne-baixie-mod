@@ -313,8 +313,8 @@
          return expand(m,FSterm)
       }
       ,init:()=>([
-         {expr:[[Infinity]],low:[[]],subitems:[]}
-         ,{expr:[],low:[[]],subitems:[]}
+         { expr: [[Infinity]], low: [[]], subitems: [], anal: ["???"] }
+         , { expr: [], low: [[]], subitems: [], anal: ["0"] }
       ])
    })
 })()

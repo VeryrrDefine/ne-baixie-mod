@@ -343,7 +343,7 @@ register.push({
       }
    })()
    ,init:()=>[
-      {expr:Infinity,low:['0'],subitems:[]}
-      ,{expr:'0',low:['0'],subitems:[]}
+     { expr: Infinity, low: ['0'], subitems: [], anal: ["c"] }
+     , { expr: '0', low: ['0'], subitems: [], anal: ["0"] }
    ]
 })

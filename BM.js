@@ -72,7 +72,7 @@ register.push({
       }
    })()
    ,init:()=>([
-      {expr:[[Infinity]],low:[[]],subitems:[]}
-      ,{expr:[],low:[[]],subitems:[]}
+      { expr: [[Infinity]], low: [[]], subitems: [], anal: ["my beloved :D"] }
+      , { expr: [], low: [[]], subitems: [], anal: ["0"] }
    ])
 })

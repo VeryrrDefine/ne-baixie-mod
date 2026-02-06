@@ -87,8 +87,8 @@
       }
    })()
    ,init:()=>([
-      {expr:[[Infinity]],low:[[]],subitems:[]}
-      ,{expr:[],low:[[]],subitems:[]}
+      { expr: [[Infinity]], low: [[]], subitems: [], anal: ["???"] }
+      , { expr: [], low: [[]], subitems: [], anal: ["0"] }
    ])
    ,semiable:m=>m.length>0
 })
