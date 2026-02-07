@@ -1,8 +1,7 @@
-h = [];
 d = JSON.parse(localStorage.getItem("ne-0"))
 s = {};
 for (i = 0; i < 36; i++){
-   s[register[i]["id"]] = d[register[i]["id"]]
+   s[register[i]["id"]]=d[register[i]["id"]]
 }
 const FSbounded = (FS, compare, seq, low) => {
    var res,n=0
@@ -94,7 +93,7 @@ register.forEach((notation,index)=>{
                      expr:FSbounded(FS,this.compare,item.expr,working_low)
                      ,low:JSON.parse(JSON.stringify(working_low))
                      , subitems: []
-                     , anal: (typeof(s[notation.id][expr])==undefined)?["???"]:["lol"]
+                     , anal: ["???"]
                   })
                   working_low = [item.subitems[0].expr]
                }
@@ -102,10 +101,12 @@ register.forEach((notation,index)=>{
             }
             ,expand_tier = (tier,item,append)=>{
                if(!(this.able(item.expr)&&extras.add(item)||this.semiable&&this.semiable(item.expr)&&this.compare(FS(item.expr,0),item.low[0])>0)) return;
-               var newitem={
+               console.log(s[notation.id])
+               console.log(FSbounded(FS, this.compare, item.expr, item.low))
+               var newitem = {
                   expr:FSbounded(FS,this.compare,item.expr,item.low)
                   , low: JSON.parse(JSON.stringify(item.low))
-                  , anal: (s[notation.id][FSbounded(FS, this.compare, item.expr, item.low)] != undefined) ? s[notation.id][FSbounded(FS, this.compare, item.expr, item.low)] : ["???"]
+                  , anal: [(s[notation.id][FSbounded(FS, this.compare, item.expr, item.low)] != undefined) ? s[notation.id][FSbounded(FS, this.compare, item.expr, item.low)] : "???"]
                   ,subitems:[]
                }
                append.splice(append.map(x=>JSON.stringify(x.expr)).indexOf(JSON.stringify(item.expr))+1,0,newitem)
@@ -120,14 +121,14 @@ register.forEach((notation,index)=>{
             expand_tier(this.$root.tier[index],this,JSON.stringify(parentsubs[parentsubs.length-1].expr)===JSON.stringify(this.expr)?parentsubs:this.subitems)
             extras.forEach(expand_extra)
          }
-         , a(b, c) { 
-            if (h.includes(b)) {
-               return "..."
-            } else { return b + " / <span>" + c + "</span>" }
+         , a(b, c) {
+            return c == "???" ? "<span class=\"g\">" + b + "</span>" : b + " / <span>" + c + "</span>"
          },
          change_anal(e) {
-               console.log(notation.id)
+            console.log(notation.id)
             this.anal[0] = window.prompt("Change the analysus of " + this.display(e) + " to...")
+            console.log(s[notation.id][e])
+            console.log(this.anal[0])
             s[notation.id][e] = this.anal[0]
          },
          hide(e) {
@@ -143,7 +144,6 @@ register.forEach((notation,index)=>{
             <div class="anal">
             <button class="a1" @mousedown="expand">Expand</button>
             <button class="a2" @mousedown="change_anal(expr)">Change analysis</button>
-            <button class="a3" @mousedown="hide(display(expr))" @mouseup="recalculate">Show/Hide</button>
             <span></div>
             <div class="tooltip" v-if="tooltip" :style="tooltipX" @mousedown.stop>
             <span v-html="display(expr)"></span> fundamental sequence:
