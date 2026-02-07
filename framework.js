@@ -1,4 +1,4 @@
-d = !localStorage.getItem("ne-0").includes("w-Y")?"":JSON.parse(localStorage.getItem("ne-0"))
+d = !typeof(localStorage.getItem("ne-0"))!=undefined?"":JSON.parse(localStorage.getItem("ne-0"))
 s = {};
 for (i = 0; i < 36; i++){
    s[register[i]["id"]]=typeof(d[register[i]])==undefined?d[register[i]["id"]]:""
