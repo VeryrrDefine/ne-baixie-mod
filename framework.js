@@ -1,7 +1,7 @@
 aaa = localStorage.getItem('ne-0');
 d = !aaa ? {} : JSON.parse(aaa);
 s = {};
-for (i = 0; i < 36; i++) {
+for (i = 0; i < register.length; i++) {
 	s[register[i].id] = d[register[i].id] ? d[register[i].id] : {};
 }
 const FSbounded = (FS, compare, seq, low) => {
@@ -227,6 +227,8 @@ register.forEach((notation, index) => {
 			},
 			change_anal(e) {
 				console.log(notation.id);
+				if (this.anal === undefined || this.anal === null) this.anal = [];
+
 				this.anal[0] = window.prompt(
 					'Change the analysus of ' + this.display(e) + ' to...',
 					s[notation.id][e],
