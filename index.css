@@ -23,7 +23,7 @@ html{
    border: 2px solid #90f;
    background-color: #daf;
    transition-duration: 0.3s;
-   width: 25%;
+   width: 14.2857%;
 }
 .tab>button[disabled]{
    background-color: #60a;
