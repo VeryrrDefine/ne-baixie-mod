@@ -17,8 +17,11 @@
             :disabled="current_tab==idx">{{tab}}</button>
       </div>
       <div class="option">
-         <button class="d" @mousedown="reset_list()">Reset the list (<b>also resets analysis</b>)</button>
+         <button class="d" @mousedown="reset_list()">Reset the list</button>
          <button class="e" @mousedown="save()">Save</button>
+         <button class="e" @mousedown="export_analysises()">Export Analysises as JSON</button>
+         <button class="e" @mousedown="import_analysises()">Import Analysises as JSON</button>
+         Auto save is enabled, save per 5 s
          <div>
             Expansion tier: <button class="f" @mousedown="decr_tier()">-</button> {{tiername}} <button class="f"
                @mousedown="incr_tier()">+</button>

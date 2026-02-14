@@ -78,6 +78,37 @@ const FSbounded = (FS, compare, seq, low) => {
 			save() {
 				localStorage.setItem('ne-0', JSON.stringify(s));
 			},
+			export_analysises() {
+				const file = new Blob([JSON.stringify(s)], {
+					type: 'application/json',
+				});
+				window.URL = window.URL || window.webkitURL;
+				const a = document.createElement('a');
+				a.href = window.URL.createObjectURL(file);
+				a.download = `Analysises${Date.now()}.json`;
+				a.click();
+			},
+			import_analysises() {
+				const a = document.createElement('input');
+				a.setAttribute('type', 'file');
+				a.setAttribute('accept', 'application/json');
+				a.click();
+				a.onchange = () => {
+					const fr = new FileReader();
+					if (a.files == null) return void alert('未选择文件');
+					fr.onload = () => {
+						const save = fr.result;
+						if (typeof save == 'string') {
+							try {
+								s = JSON.parse(save);
+							} catch {
+								alert('Cannot load analysises');
+							}
+						}
+					};
+					fr.readAsText(a.files[0]);
+				};
+			},
 		},
 	});
 register.forEach((notation, index) => {
