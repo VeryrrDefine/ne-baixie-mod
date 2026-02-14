@@ -1,67 +1,77 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<title>Notation Explorer+</title>
-<link rel="stylesheet" type="text/css" href="index.css">
-<meta charset="UTF-8">
-<meta name="author" content="hyp_cos remixed by Termiunsfinity">
-</head><body><script src="Vue.js"></script>
-<script>var register=[];</script>
-<div id="app">
-   <div class="tab">
-      <button v-for="(tab,idx) in tab_names" @mousedown="current_tab=idx" :disabled="current_tab==idx">{{tab}}</button>
+   <title>Notation Explorer+</title>
+   <link rel="stylesheet" type="text/css" href="index.css">
+   <meta charset="UTF-8">
+   <meta name="author" content="hyp_cos remixed by Termiunsfinity">
+</head>
+
+<body>
+   <script src="Vue.js"></script>
+   <script>var register = [];</script>
+   <div id="app">
+      <div class="tab">
+         <button v-for="(tab,idx) in tab_names" @mousedown="current_tab=idx"
+            :disabled="current_tab==idx">{{tab}}</button>
+      </div>
+      <div class="option">
+         <button class="d" @mousedown="reset_list()">Reset the list (<b>also resets analysis</b>)</button>
+         <button class="e" @mousedown="save()">Save</button>
+         <div>
+            Expansion tier: <button class="f" @mousedown="decr_tier()">-</button> {{tiername}} <button class="f"
+               @mousedown="incr_tier()">+</button>
+            (Press 0~9 to select tier)
+         </div>
+         <div>
+            Extra FS terms when expand: <button class="f" @mousedown="decr_extra()">-</button> {{extra_FS[current_tab]}}
+            <button class="f" @mousedown="incr_extra()">+</button>
+            (Press "-" to decrease, and "+" to increase)
+         </div>
+         <div>
+            FS terms shown in tooltip: <button class="f" @mousedown="decrFS()">-</button> {{FS_shown[current_tab]}}
+            <button class="f" @mousedown="incrFS()">+</button>
+            (Press "&lt;" to decrease, and "&gt;" to increase)
+         </div>
+      </div>
+      <component :is="current_notation" :subitems="datasets[current_tab]"></component>
    </div>
-   <div class="option">
-   <button class="d" @mousedown="reset_list()">Reset the list (<b>also resets analysis</b>)</button><button class="e" @mousedown="save()">Save</button>
-   <div>
-      Expansion tier: <button class="f" @mousedown="decr_tier()">-</button> {{tiername}} <button class="f" @mousedown="incr_tier()">+</button>
-      (Press 0~9 to select tier)
-   </div>
-   <div>
-      Extra FS terms when expand: <button class="f" @mousedown="decr_extra()">-</button> {{extra_FS[current_tab]}} <button class="f" @mousedown="incr_extra()">+</button>
-      (Press "-" to decrease, and "+" to increase)
-   </div>
-   <div>
-      FS terms shown in tooltip: <button class="f" @mousedown="decrFS()">-</button> {{FS_shown[current_tab]}} <button class="f" @mousedown="incrFS()">+</button>
-      (Press "&lt;" to decrease, and "&gt;" to increase)
-   </div>
-   </div>
-   <component :is="current_notation" :subitems="datasets[current_tab]"></component>
-</div>
-<script src="omega-Y.js"></script>
-<script src="omega-Y-magma.js"></script>
-<script src="1-Y.js"></script>
-<script src="BM.js"></script>
-<script src="BHM.js"></script>
-<script src="BSM.js"></script>
-<script src="BLM.js"></script>
-<script src="CM.js"></script>
-<script src="TomegaMN.js"></script>
-<script src="MomegaMN.js"></script>
-<script src="MTomegaMN.js"></script>
-<script src="Domega2MN.js"></script>
-<script src="Aomega2MN.js"></script>
-<script src="Tomega^omegaMN.js"></script>
-<script src="DEN.js"></script>
-<script src="DEN2.js"></script>
-<script src="DEN3.js"></script>
-<script src="TON-main.js"></script>
-<script src="TON-DoR.js"></script>
-<script src="TON-DRP.js"></script>
-<script src="TON-I.js"></script>
-<script src="TON-IBP.js"></script>
-<script src="TON-MC.js"></script>
-<script src="TON-MPC.js"></script>
-<script src="TON-DRC.js"></script>
-<script src="TON-DRPC.js"></script>
-<script src="aSAN-1.js"></script>
-<script src="aSAN-2.js"></script>
-<script src="aSAN-3.js"></script>
-<script src="aSAN~3+.js"></script>
-<script src="LMN.js"></script>
-<script src="LON.js"></script>
-<script src="HSPN.js"></script>
-<script src="cOCF.js"></script>
-<script src="framework.js"></script>
+   <script src="omega-Y.js"></script>
+   <script src="omega-Y-magma.js"></script>
+   <script src="1-Y.js"></script>
+   <script src="BM.js"></script>
+   <script src="BHM.js"></script>
+   <script src="BSM.js"></script>
+   <script src="BLM.js"></script>
+   <script src="CM.js"></script>
+   <script src="TomegaMN.js"></script>
+   <script src="MomegaMN.js"></script>
+   <script src="MTomegaMN.js"></script>
+   <script src="Domega2MN.js"></script>
+   <script src="Aomega2MN.js"></script>
+   <script src="Tomega^omegaMN.js"></script>
+   <script src="DEN.js"></script>
+   <script src="DEN2.js"></script>
+   <script src="DEN3.js"></script>
+   <script src="TON-main.js"></script>
+   <script src="TON-DoR.js"></script>
+   <script src="TON-DRP.js"></script>
+   <script src="TON-I.js"></script>
+   <script src="TON-IBP.js"></script>
+   <script src="TON-MC.js"></script>
+   <script src="TON-MPC.js"></script>
+   <script src="TON-DRC.js"></script>
+   <script src="TON-DRPC.js"></script>
+   <script src="aSAN-1.js"></script>
+   <script src="aSAN-2.js"></script>
+   <script src="aSAN-3.js"></script>
+   <script src="aSAN~3+.js"></script>
+   <script src="LMN.js"></script>
+   <script src="LON.js"></script>
+   <script src="HSPN.js"></script>
+   <script src="cOCF.js"></script>
+   <script src="framework.js"></script>
 </body>
+
 </html>
