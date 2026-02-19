@@ -32,10 +32,37 @@
 			if (n == 1) return [0, 1];
 			let new2 = n - 1;
 			let bas = [0, 1];
+			// 0,1,
+			// 0,2, 2, 0,5, 2, 0,8, 8, 8,  6,2,
+			// 0,14,14,0,17,14,0,20,20,20,18,14,
+			// 0,26,26,0,29,26,0,32,32,32,30,26,
+			// 0,38,38,0,41,38,0,44,44,44,42,38,
+			// 0,50,50,0,53,50,0,56,56,56,54,50,
+			// 0,62,62,0,65,62,0,68,68,68,66,62
+
 			for (let i = 0; i < new2; i++) {
-				bas.push(0);
-				bas.push(i * 3 + 2);
-				bas.push(i * 3 + 2);
+				switch (i % 4) {
+					case 0:
+						bas.push(0);
+						bas.push(Math.floor(i / 4) * 12 + 2);
+						bas.push(Math.floor(i / 4) * 12 + 2);
+						break;
+					case 1:
+						bas.push(0);
+						bas.push(Math.floor(i / 4) * 12 + 5);
+						bas.push(Math.floor(i / 4) * 12 + 2);
+						break;
+					case 2:
+						bas.push(0);
+						bas.push(Math.floor(i / 4) * 12 + 8);
+						bas.push(Math.floor(i / 4) * 12 + 8);
+						bas.push(Math.floor(i / 4) * 12 + 8);
+						break;
+					case 3:
+						bas.push(Math.floor(i / 4) * 12 + 6);
+						bas.push(Math.floor(i / 4) * 12 + 2);
+						break;
+				}
 			}
 			return bas;
 		};
