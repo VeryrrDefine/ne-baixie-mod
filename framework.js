@@ -255,7 +255,7 @@ register.forEach((notation, index) => {
 		},
 		template:
 			`<li><div class="shown-item" @mouseenter="recalculate" @mouseleave="unshow()">
-            <button class="a1" @mousedown="expand" v-if="showExpand(expr)">Expand</button>
+            <button class="a1" @mousedown="expand">Expand</button>
             <button class="a2" @mousedown="change_anal(expr)">Change analysis</button><span v-html="a(display(expr),anal)"></span>
             <div class="anal">
             <span></div>

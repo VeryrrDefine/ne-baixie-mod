@@ -31,12 +31,9 @@
 			if (n == 0) return [0];
 			if (n == 1) return [0, 1];
 			let new2 = n - 1;
-			let bas = [0, 1, 0, 2];
+			let bas = [0, 1, 0, 2, 0, 4, 4];
 			for (let i = 0; i < new2; i++) {
-				bas.push(1);
-				bas.push(0);
-				bas.push(5 + i * 3);
-				break;
+				bas.push(4);
 			}
 			return bas;
 		};
