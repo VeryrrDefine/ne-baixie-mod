@@ -50,9 +50,9 @@
 			if (n == 0) return [0];
 			if (n == 1) return [0, 1];
 			let new2 = n - 1;
-			let bas = [0, 1, 0, 2, 0, 4, 4];
+			let bas = [0, 1];
 			for (let i = 0; i < new2; i++) {
-				bas.push(4);
+				bas.push(i + 2);
 			}
 			return bas;
 		};
@@ -69,7 +69,7 @@
 				}
 			}
 
-			return pairs;
+			return pairs + ';' + sequence_display(seq);
 		},
 		able: (seq) => seq[seq.length - 1] > 0,
 		compare: sequence_compare,
