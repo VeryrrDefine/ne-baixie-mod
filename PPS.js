@@ -58,7 +58,7 @@
 		};
 	register.push({
 		id: 'pps',
-		name: 'Parented predecessor sequence',
+		name: 'Parented predecessor pair sequence',
 		display: function (seq) {
 			let pairs = '';
 			for (let i = 0; i < seq.length; i++) {
