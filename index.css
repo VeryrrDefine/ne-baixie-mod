@@ -43,33 +43,16 @@ html{
    top: 0px;
 }
 
-.a1{
-   border-radius: 6px;
-   background-color: #d9f;
-   transition-duration: 0.2s;
+.a1,.a2 {
+   background-color: #000;
+   color: #888;
+   border-style: none;
 }
-
-.a1:hover {
-   border-radius: 7px;
-   background-color: #d4f;
-}
-
-.a2 {
-   border-radius: 6px;
-   background-color: #88f;
-   transition-duration: 0.2s;
-}
-
-.a2:hover {
-   border-radius: 7px;
-   background-color: #44f;
-}
-
 
 .d{
    background-color: #d26;
    border-radius: 6px;
-   color: #fff;
+   color: #888;
    transition-duration: 0.2s;
 }
 
@@ -81,7 +64,7 @@ html{
 .e {
    background-color: #666;
    border-radius: 6px;
-   color: #fff;
+   color: #aaa;
    transition-duration: 0.2s;
 }
 
@@ -102,8 +85,9 @@ html{
 }
 
 .f{
-   background-color: hsl(150, 100%, 93%);
-   border-radius: 3px;
+   background-color: #000;
+   color: #888;
+   border-style: none;
 }
 
 .g{
