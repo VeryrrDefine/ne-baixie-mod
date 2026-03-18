@@ -1,6 +1,7 @@
 html{
    font-family: "Saira Medium";
-   background: linear-gradient(#aabbcc,#ccddff);
+   background: linear-gradient(hsl(0, 0%, 0%),hsl(0, 0%, 0%));
+   color:#888;
 }
 
 .tooltip{
@@ -9,7 +10,7 @@ html{
    z-index: 1073741821;
    bottom: 100%;
    padding: 2px 5px;
-   background-color: #dfd;
+   background-color: hsl(120, 92%, 15%);
    text-align: left;
 }
 .shown-item{
@@ -17,13 +18,14 @@ html{
    text-align: left;
 }
 .shown-item:hover{
-   background-color: #cff;
+   background-color: rgb(70, 111, 111);
 }
 .tab>button{
-   border: 2px solid #90f;
-   background-color: #daf;
+   border: 2px solid hsl(276, 100%, 50%);
+   background-color: hsl(0, 0%, 0%);
    transition-duration: 0.3s;
    width: 14.2857%;
+   color: #888
 }
 .tab>button[disabled]{
    background-color: #60a;
@@ -90,7 +92,7 @@ html{
 
 .option{
    position: fixed;
-   background-image: linear-gradient(rgba(255,255,255,0.5),rgba(235,235,235,1));
+   background-image: linear-gradient(rgba(0, 0, 0, 0.5),rgb(0, 0, 0));
    text-align: left;
    bottom: 0%;
    left: 0px;
@@ -100,7 +102,7 @@ html{
 }
 
 .f{
-   background-color: #ddffee;
+   background-color: hsl(150, 100%, 93%);
    border-radius: 3px;
 }
 
