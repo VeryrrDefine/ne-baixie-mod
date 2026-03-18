@@ -1,4 +1,23 @@
 (() => {
+	function notsub(seq, index) {
+		const 父项序号 = index;
+		坏根序号 = 父项序号;
+		坏根值 = seq[坏根序号 - 1];
+		坏部 = seq.slice(坏根序号, index);
+		白根存在 = 坏部.some((val) => val === 坏根值);
+		return seq.slice(seq[index], index).includes(seq[seq[index] - 1]);
+	}
+	function level(seq, index) {
+		if (seq[0] === Infinity) return 0;
+		if (seq[index] == 0) return 0;
+		if (notsub(seq, index)) return 0;
+		else {
+			let s = [...seq];
+			s[index]--;
+			return level(s, index) + 1;
+		}
+	}
+
 	var expand = (seq, FSterm) => {
 			var len = seq.length;
 			var x = len > 0 ? seq[len - 1] : null;
@@ -40,7 +59,18 @@
 	register.push({
 		id: 'pps',
 		name: 'Parented predecessor sequence',
-		display: sequence_display,
+		display: function (seq) {
+			let pairs = '';
+			for (let i = 0; i < seq.length; i++) {
+				if (seq[i] == 0) pairs += '()';
+				else {
+					let level2 = level(seq, i);
+					pairs += `(${seq[i] - level2},${level2})`;
+				}
+			}
+
+			return pairs;
+		},
 		able: (seq) => seq[seq.length - 1] > 0,
 		compare: sequence_compare,
 		FS: (m, FSterm) => {
