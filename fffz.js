@@ -1417,20 +1417,20 @@
 		},
 	});
 	register.push({
-		id: 'fffz0052strong',
+		id: 'fffz0052strong2',
 		name: 'Fake Fake Fake Zeta Strong',
 		display,
 		able: isLimit,
 		compare,
 		FS: (m, FSterm) => {
 			if ('' + m === 'Infinity') return Limit(FSterm);
-			if (m.isZero) return actual.readFancy('0');
-			return expand(m, FSterm, false);
+			if (m.isZero) return strong.readFancy('0');
+			return expand(m, FSterm, false, 1);
 		},
 		FSalter: (m, FSterm) => {
 			if ('' + m === 'Infinity') return Limit(FSterm);
 			if (m.isZero) return '0';
-			return expand(m, FSterm, true);
+			return expand(m, FSterm, true, 1);
 		},
 		init: () => [
 			{
