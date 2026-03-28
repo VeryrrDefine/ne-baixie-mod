@@ -577,30 +577,30 @@
 			}
 
 			/*
-				static isNonRepel(fake) {
-					if (!Array.isArray(fake)) return false;
+            static isNonRepel(fake) {
+                if (!Array.isArray(fake)) return false;
 
-					if (fake.length !== 2) return true;
+                if (fake.length !== 2) return true;
 
-					let a = fake[0];
-					let b = fake[1];
+                let a = fake[0];
+                let b = fake[1];
 
-					let cur = b;
+                let cur = b;
 
-					const visited = new Set();
+                const visited = new Set();
 
-					while (!cur.isZero) {
-						if (fffz.equals(cur, a)) return false;
+                while (!cur.isZero) {
+                    if (fffz.equals(cur, a)) return false;
 
-						if (visited.has(cur)) break;
-						visited.add(cur);
+                    if (visited.has(cur)) break;
+                    visited.add(cur);
 
-						cur = cur.core;
-					}
+                    cur = cur.core;
+                }
 
-					return true;
-				}
-				*/
+                return true;
+            }
+            */
 
 			static isNonRepel(fake) {
 				//const key = fake.map(x => x.printFancy()).join(',');
@@ -658,40 +658,50 @@
 				return true;
 			}
 			/*
-				static isUpProj(fake) {
-					//const key = fake.map(x => x.printFancy()).join(',');
-					//console.log("isUpProj called on", key);
+            static isUpProj(fake) {
+                //const key = fake.map(x => x.printFancy()).join(',');
+                //console.log("isUpProj called on", key);
 
-					if (!Array.isArray(fake) || fake.length === 0) return false;
+                if (!Array.isArray(fake) || fake.length === 0) return false;
 
-					for (let x of fake) {
-						if (x.isZero) return false;
-					}
+                for (let x of fake) {
+                    if (x.isZero) return false;
+                }
 
-					const baseFake = fake[0].fake;
+                const baseFake = fake[0].fake;
 
-					for (let i = 1; i < fake.length; i++) {
-						const curFake = fake[i].fake;
+                for (let i = 1; i < fake.length; i++) {
+                    const curFake = fake[i].fake;
 
-						if (baseFake.length !== curFake.length) return false;
+                    if (baseFake.length !== curFake.length) return false;
 
-						for (let j = 0; j < baseFake.length; j++) {
-							if (!fffz.equals(baseFake[j], curFake[j])) return false;
-						}
-					}
+                    for (let j = 0; j < baseFake.length; j++) {
+                        if (!fffz.equals(baseFake[j], curFake[j])) return false;
+                    }
+                }
 
-					const newFake = fake.map(x => x.core);
+                const newFake = fake.map(x => x.core);
 
-					return fffz.isCompatible(newFake);
-				}
-				*/
+                return fffz.isCompatible(newFake);
+            }
+            */
 			static isUpProj(fake) {
 				//const key = fake.map(x => x.printFancy()).join(',');
 				//console.log("isUpProj called on", key);
 
 				if (fake[0].isSucc()) return false;
 
-				const seq2 = fake.map((x) => x.core);
+				const seq2 = [];
+				let acc = null;
+				for (let i = 0; i < fake.length; i++) {
+					const core = fake[i].core;
+					if (i === 0) {
+						acc = core;
+					} else {
+						acc = fffz.add(acc, core);
+					}
+					seq2.push(acc);
+				}
 				if (!fffz.isCompatible(seq2)) return false;
 
 				const first = fake[0];
@@ -725,12 +735,12 @@
 					}
 				}
 				/*
-					let logstr = "found chain: "
-					for (let i = 0; i < newFake.length; i++) {
-						logstr = logstr + newFake[i].printFancy() + "  ";
-					}
-					console.log(logstr);
-					*/
+                let logstr = "found chain: "
+                for (let i = 0; i < newFake.length; i++) {
+                    logstr = logstr + newFake[i].printFancy() + "  ";
+                }
+                console.log(logstr);
+                */
 				return true;
 			}
 
@@ -784,16 +794,16 @@
 					}
 					if (fffz.isCompatible(newFake)) {
 						/*
-							let logstr = "";
-							for (let k = 0; k < fake.length; k++) {
-								logstr = logstr + fake[k].printFancy() + "  ";
-							}
-							let newstr = "";
-							for (let k = 0; k < newFake.length; k++) {
-								newstr = newstr + newFake[k].printFancy() + "  ";
-							}
-							console.log(logstr + "translate from", i + 1, "as", newstr);
-							*/
+                        let logstr = "";
+                        for (let k = 0; k < fake.length; k++) {
+                            logstr = logstr + fake[k].printFancy() + "  ";
+                        }
+                        let newstr = "";
+                        for (let k = 0; k < newFake.length; k++) {
+                            newstr = newstr + newFake[k].printFancy() + "  ";
+                        }
+                        console.log(logstr + "translate from", i + 1, "as", newstr);
+                        */
 						return true;
 					}
 				}
