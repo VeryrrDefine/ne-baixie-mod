@@ -1127,6 +1127,34 @@
 				return `Z[${inner}]`;
 			}
 
+			printpsiZ() {
+				if (this.isZero) return '0';
+
+				if (fffz.equals(this, fffz.epZero)) return 'ε_0';
+				if (fffz.isLess(this, fffz.epZero)) {
+					const ord = fffz.fffzToOrdinal(this);
+					if (ord !== null) {
+						return Ordinal.printStr(ord);
+					}
+				}
+
+				const arr = [...this.fake, this.core];
+				const inner = arr.map((x) => x.printpsiZ());
+				if (inner.length == 1) {
+					return `ψZ(${inner[0]})`;
+				}
+				let res = 'ψZ[';
+				for (let i = 0; i < inner.length - 1; i++) {
+					res += inner[i];
+					if (i + 1 != inner.length - 1) {
+						res += ',';
+					}
+				}
+				res += ']';
+				res += `(${inner.at(-1)})`;
+				return res;
+			}
+
 			static buildNat(n) {
 				if (n === 0) return fffz.zero();
 				let one = new fffz([], fffz.zero(), false);
@@ -1327,9 +1355,10 @@
 		if (t == 1) return strong.fffz;
 		throw new Error('Type not defined');
 	}
+
 	function display(w, t = 0) {
 		if ('' + w == Infinity) return 'Limit';
-		return selector(t).readFancy(w).printFancy();
+		return selector(t).readFancy(w).printpsiZ();
 	}
 
 	function Limit(FSterm) {
