@@ -375,46 +375,90 @@
 				if (fffz.cmpStrengthCache.has(key)) {
 					return fffz.cmpStrengthCache.get(key);
 				}
+				console.log('cmpStrength', key);
+
+				if (a.isZero && b.isZero) {
+					fffz.cmpStrengthCache.set(key, 0);
+					return 0;
+				}
+				if (a.isZero) {
+					fffz.cmpStrengthCache.set(key, -1);
+					return -1;
+				}
+				if (b.isZero) {
+					fffz.cmpStrengthCache.set(key, 1);
+					return 1;
+				}
 
 				let curA = fffz.fullUnnest(a);
 				let curB = fffz.fullUnnest(b);
 
-				let result = 0;
-				while (true) {
-					if (curA.isZero && curB.isZero) {
-						result = 0;
-						break;
-					}
-					if (curA.isZero) {
-						result = -1;
-						break;
-					}
-					if (curB.isZero) {
-						result = 1;
-						break;
-					}
-					if (fffz.equals(curA, curB)) {
-						result = 0;
-						break;
+				if (fffz.equals(curA, curB)) {
+					fffz.cmpStrengthCache.set(key, 0);
+					return 0;
+				}
+
+				function isTrueLimit(x) {
+					if (x.isStrong()) return true;
+					const candidate = [...x.fake, x.core];
+					return fffz.isCompatible(candidate);
+				}
+
+				const isLimitA = isTrueLimit(curA);
+				const isLimitB = isTrueLimit(curB);
+
+				if (isLimitA && isLimitB) {
+					const cmpCore = fffz.cmpStrength(curA.core, curB.core);
+					if (cmpCore !== 0) {
+						fffz.cmpStrengthCache.set(key, cmpCore);
+						return cmpCore;
 					}
 
-					const compatA =
-						fffz.isUpProj([curA, fffz.add(curA, curB)]) ||
-						fffz.isDownProj([curA, fffz.add(curA, curB)]);
-					const compatB =
-						fffz.isUpProj([curB, fffz.add(curB, curA)]) ||
-						fffz.isDownProj([curB, fffz.add(curB, curA)]);
-					if (compatA && !compatB) {
-						result = 1;
-						break;
-					}
-					if (!compatA && compatB) {
-						result = -1;
-						break;
+					if (fffz.mode === 'Actual' && curA.core.isSucc() && curB.core.isSucc()) {
+						fffz.cmpStrengthCache.set(key, 0);
+						return 0;
 					}
 
-					curA = fffz.fullUnnest(curA.core);
-					curB = fffz.fullUnnest(curB.core);
+					const valCmp = fffz.compare(curA, curB);
+					fffz.cmpStrengthCache.set(key, valCmp);
+					return valCmp;
+				}
+
+				const getJudge = (x, isLimit) => {
+					if (isLimit && fffz.mode === 'Actual' && x.core.isSucc()) return fffz.omega;
+					if (isLimit) return x;
+					return x.fake[x.fake.length - 1];
+				};
+				const judgeA = getJudge(curA, isLimitA);
+				const judgeB = getJudge(curB, isLimitB);
+				console.log('judge', judgeA.printNat(), judgeB.printNat());
+
+				const cmpJudge = fffz.cmpStrength(judgeA, judgeB);
+				let result;
+				if (cmpJudge !== 0) {
+					if (cmpJudge > 0) {
+						const newB = curB.core;
+						result = fffz.cmpStrength(curA, newB);
+					} else {
+						const newA = curA.core;
+						result = fffz.cmpStrength(newA, curB);
+					}
+				} else {
+					let newA = curA;
+					let newB = curB;
+
+					if (!isLimitA || (fffz.mode === 'Actual' && curA.core.isSucc()))
+						newA = curA.core;
+					if (!isLimitB || (fffz.mode === 'Actual' && curB.core.isSucc()))
+						newB = curB.core;
+
+					const newFakeA = [newA, fffz.add(newA, newB)];
+					const newFakeB = [newB, fffz.add(newB, newA)];
+					const compatA = fffz.isCompatible(newFakeA);
+					const compatB = fffz.isCompatible(newFakeB);
+					if (compatA && !compatB) return 1;
+					if (!compatA && compatB) return -1;
+					result = fffz.cmpStrength(newA, newB);
 				}
 
 				fffz.cmpStrengthCache.set(key, result);
@@ -540,17 +584,6 @@
 				return newA;
 			}
 
-			static isAscending(fake) {
-				//const key = fake.map(x => x.printFancy()).join(',');
-				//console.log("isAscending called on", key);
-
-				if (!Array.isArray(fake) || fake.length < 2) return true;
-				for (let i = 0; i < fake.length - 1; i++) {
-					if (!fffz.isLess(fake[i], fake[i + 1])) return false;
-				}
-				return true;
-			}
-
 			static isBounded(fake) {
 				//const key = fake.map(x => x.printFancy()).join(',');
 				//console.log("isBounded called on", key);
@@ -576,32 +609,6 @@
 				const secondLast = fake[fake.length - 2];
 				return !(secondLast.isSucc() && last.isSucc());
 			}
-
-			/*
-            static isNonRepel(fake) {
-                if (!Array.isArray(fake)) return false;
-
-                if (fake.length !== 2) return true;
-
-                let a = fake[0];
-                let b = fake[1];
-
-                let cur = b;
-
-                const visited = new Set();
-
-                while (!cur.isZero) {
-                    if (fffz.equals(cur, a)) return false;
-
-                    if (visited.has(cur)) break;
-                    visited.add(cur);
-
-                    cur = cur.core;
-                }
-
-                return true;
-            }
-            */
 
 			static isNonRepel(fake) {
 				//const key = fake.map(x => x.printFancy()).join(',');
@@ -639,97 +646,6 @@
 				return !a.isSucc() && b.isSucc();
 			}
 
-			static isJoint(fake) {
-				//const key = fake.map(x => x.printFancy()).join(',');
-				//console.log("isJoint called on", key);
-
-				if (!Array.isArray(fake)) return false;
-
-				if (fake.length <= 2) return false;
-
-				const n = fake.length;
-
-				for (let i = 0; i < n; i++) {
-					for (let j = i + 1; j < n; j++) {
-						const sub = [fake[i], fake[j]];
-						if (!fffz.isCompatible(sub)) return false;
-					}
-				}
-
-				return true;
-			}
-			/*
-            static isUpProj(fake) {
-                //const key = fake.map(x => x.printFancy()).join(',');
-                //console.log("isUpProj called on", key);
-
-                if (!Array.isArray(fake) || fake.length === 0) return false;
-
-                for (let x of fake) {
-                    if (x.isZero) return false;
-                }
-
-                const baseFake = fake[0].fake;
-
-                for (let i = 1; i < fake.length; i++) {
-                    const curFake = fake[i].fake;
-
-                    if (baseFake.length !== curFake.length) return false;
-
-                    for (let j = 0; j < baseFake.length; j++) {
-                        if (!fffz.equals(baseFake[j], curFake[j])) return false;
-                    }
-                }
-
-                const newFake = fake.map(x => x.core);
-
-                return fffz.isCompatible(newFake);
-            }
-            */
-			static isUpProj(fake) {
-				//const key = fake.map(x => x.printFancy()).join(',');
-				//console.log("isUpProj called on", key);
-
-				if (fake[0].isSucc()) return false;
-
-				for (let i = 0; i < fake.length; i++) {
-					const full = fffz.fullUnnest(fake[i]);
-					if (!fffz.equals(fake[i], full)) {
-						return false;
-					}
-				}
-
-				const seq2 = [];
-				let acc = null;
-				for (let i = 0; i < fake.length; i++) {
-					const core = fake[i].core;
-					if (i === 0) {
-						acc = core;
-					} else {
-						acc = fffz.add(acc, core);
-					}
-					seq2.push(acc);
-				}
-				if (!fffz.isCompatible(seq2)) return false;
-
-				const first = fake[0];
-				if (first.fake.length === 0) {
-					return true;
-				}
-
-				const newFirst = new fffz(
-					first.fake.slice(0, -1),
-					first.fake[first.fake.length - 1],
-					false,
-				);
-				const seq1 = [newFirst];
-				for (let i = 1; i < fake.length; i++) {
-					const added = fffz.add(newFirst, fake[i].core);
-					seq1.push(added);
-				}
-				return fffz.isCompatible(seq1);
-			}
-
 			static isCantorTrail(fake) {
 				//const key = fake.map(x => x.printFancy()).join(',');
 				//console.log("isCantorTrail called on", key);
@@ -752,32 +668,74 @@
 				return true;
 			}
 
-			static isDownProj(fake) {
-				//const key = fake.map(x => x.printFancy()).join(',');
-				//console.log("isDownProj called on", key);
+			static isUpProj(fake) {
+				const key = fake.map((x) => x.printNat()).join(',');
+				console.log('isUpProj called on', key);
 
-				if (!Array.isArray(fake) || fake.length !== 2) return false;
-				if (fake[0].isSucc()) return false;
+				if (!Array.isArray(fake) || fake.length === 0) return false;
 
-				const core0 = fffz.strongCore(fake[0]).core;
-				const core1 = fffz.strongCore(fake[1]).core;
+				const isTrueLimit = (x) => {
+					if (x.isStrong()) return true;
+					const candidate = [...x.fake, x.core];
+					return fffz.isCompatible(candidate);
+				};
 
-				if (!(fffz.mode === 'Actual' && core0.isSucc())) {
-					const cmp = fffz.cmpStrength(core0, core1);
-					if (cmp === 1) return true;
-					if (cmp === 0 && fffz.isLess(core1, core0)) return true;
+				const getJudge = (x, isLimit) => {
+					if (isLimit && fffz.mode === 'Actual' && x.core.isSucc()) return fffz.omega;
+					if (isLimit) return x;
+					return x.fake[x.fake.length - 1];
+				};
+
+				const allLimit = fake.every((x) => isTrueLimit(x));
+				if (allLimit) {
+					const coreSeq = fake.map((x) => x.core);
+					return fffz.isCompatible(coreSeq);
 				}
 
-				if (fffz.cmpStrength(fake[0].core, fake[1]) === 1) return true;
-				return false;
+				const items = fake.map((x) => {
+					const isLimit = isTrueLimit(x);
+					const judge = getJudge(x, isLimit);
+					return { isLimit, judge, obj: x };
+				});
+
+				const nonLimitItems = items.filter((item) => !item.isLimit);
+				const limitItems = items.filter((item) => item.isLimit);
+
+				let nonLimitJudge = null;
+				for (const item of nonLimitItems) {
+					if (nonLimitJudge === null) {
+						nonLimitJudge = item.judge;
+					} else if (fffz.cmpStrength(nonLimitJudge, item.judge) !== 0) {
+						return false;
+					}
+				}
+
+				if (nonLimitItems.length > 0) {
+					const baseStrength = nonLimitJudge;
+					for (const item of limitItems) {
+						if (fffz.cmpStrength(item.judge, baseStrength) < 0) {
+							return false;
+						}
+					}
+				}
+
+				const extracted = items.map((item) => {
+					const condition =
+						!item.isLimit || (fffz.mode === 'Actual' && item.obj.core.isSucc());
+					return condition ? item.obj.core : item.obj;
+				});
+
+				return fffz.isCompatible(extracted);
 			}
 
-			static isStrengthDesc(fake) {
-				if (!Array.isArray(fake) || fake.length < 3) return false;
+			static isDownProj(fake) {
+				if (!Array.isArray(fake) || fake.length < 2) return false;
 
 				for (let i = 0; i < fake.length - 1; i++) {
-					const pair = [fake[i], fake[i + 1]];
-					if (!fffz.isDownProj(pair)) return false;
+					const prev = fake[i];
+					const next = fake[i + 1];
+					if (fffz.cmpStrength(prev, next) !== 1) return false;
+					if (fffz.mode === 'Actual' && prev.core.isSucc()) return false;
 				}
 				return true;
 			}
@@ -854,15 +812,12 @@
 				else if (fake.length === 0) result = true;
 				else if (fake[0].isZero) result = false;
 				else if (fake.length === 1) result = true;
-				else if (!fffz.isBounded(fake)) result = false;
 				else if (!fffz.isNonDouble(fake)) result = false;
 				else if (!fffz.isNonRepel(fake)) result = false;
 				else if (fffz.isEndSucc(fake)) result = true;
-				else if (fffz.isJoint(fake)) result = true;
-				else if (fffz.isUpProj(fake)) result = true;
 				else if (fffz.isCantorTrail(fake)) result = true;
+				else if (fffz.isUpProj(fake)) result = true;
 				else if (fffz.isDownProj(fake)) result = true;
-				else if (fffz.isStrengthDesc(fake)) result = true;
 				else if (fffz.isTranslate(fake)) result = true;
 				else result = false;
 
