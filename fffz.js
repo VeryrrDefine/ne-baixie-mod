@@ -1127,7 +1127,7 @@
 				return `Z[${inner}]`;
 			}
 
-			printpsiZ() {
+			printpsiZ(mode2 = 0) {
 				if (this.isZero) return '0';
 
 				if (fffz.equals(this, fffz.epZero)) return 'ε_0';
@@ -1139,7 +1139,14 @@
 				}
 
 				const arr = [...this.fake, this.core];
+
 				const inner = arr.map((x) => x.printpsiZ());
+
+				// const dataset2 = s[mode2 == 1 ? 'fffz0052strong2' : 'fffz0052'];
+				// const inner = arr.map((x) => {
+				// 	let fancy2 = x.printFancy();
+				// 	return dataset2[fancy2] ? dataset2[fancy2] : x.printpsiZ(mode2);
+				// });
 				if (inner.length == 1) {
 					return `ψZ(${inner[0]})`;
 				}
@@ -1358,7 +1365,7 @@
 
 	function display(w, t = 0) {
 		if ('' + w == Infinity) return 'Limit';
-		return selector(t).readFancy(w).printpsiZ();
+		return selector(t).readFancy(w).printpsiZ(t);
 	}
 
 	function Limit(FSterm) {
@@ -1419,7 +1426,7 @@
 	register.push({
 		id: 'fffz0052strong2',
 		name: 'Fake Fake Fake Zeta Strong',
-		display,
+		display: (w) => display(w, 1),
 		able: isLimit,
 		compare,
 		FS: (m, FSterm) => {
