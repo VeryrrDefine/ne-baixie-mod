@@ -231,6 +231,7 @@
 				.join('+');
 		}
 	}
+
 	function dwaFFFZ(mode = 'Actual') {
 		class fffz {
 			static mode = mode;
@@ -691,6 +692,13 @@
 
 				if (fake[0].isSucc()) return false;
 
+				for (let i = 0; i < fake.length; i++) {
+					const full = fffz.fullUnnest(fake[i]);
+					if (!fffz.equals(fake[i], full)) {
+						return false;
+					}
+				}
+
 				const seq2 = [];
 				let acc = null;
 				for (let i = 0; i < fake.length; i++) {
@@ -735,12 +743,12 @@
 					}
 				}
 				/*
-					let logstr = "found chain: "
-					for (let i = 0; i < newFake.length; i++) {
-						logstr = logstr + newFake[i].printFancy() + "  ";
-					}
-					console.log(logstr);
-					*/
+                let logstr = "found chain: "
+                for (let i = 0; i < newFake.length; i++) {
+                    logstr = logstr + newFake[i].printFancy() + "  ";
+                }
+                console.log(logstr);
+                */
 				return true;
 			}
 
@@ -794,16 +802,16 @@
 					}
 					if (fffz.isCompatible(newFake)) {
 						/*
-							let logstr = "";
-							for (let k = 0; k < fake.length; k++) {
-								logstr = logstr + fake[k].printFancy() + "  ";
-							}
-							let newstr = "";
-							for (let k = 0; k < newFake.length; k++) {
-								newstr = newstr + newFake[k].printFancy() + "  ";
-							}
-							console.log(logstr + "translate from", i + 1, "as", newstr);
-							*/
+                        let logstr = "";
+                        for (let k = 0; k < fake.length; k++) {
+                            logstr = logstr + fake[k].printFancy() + "  ";
+                        }
+                        let newstr = "";
+                        for (let k = 0; k < newFake.length; k++) {
+                            newstr = newstr + newFake[k].printFancy() + "  ";
+                        }
+                        console.log(logstr + "translate from", i + 1, "as", newstr);
+                        */
 						return true;
 					}
 				}
