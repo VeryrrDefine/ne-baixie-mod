@@ -375,7 +375,6 @@
 				if (fffz.cmpStrengthCache.has(key)) {
 					return fffz.cmpStrengthCache.get(key);
 				}
-				console.log('cmpStrength', key);
 
 				if (a.isZero && b.isZero) {
 					fffz.cmpStrengthCache.set(key, 0);
@@ -390,8 +389,8 @@
 					return 1;
 				}
 
-				let curA = fffz.mode === 'Actual' ? fffz.fullUnnest(a) : a;
-				let curB = fffz.mode === 'Actual' ? fffz.fullUnnest(b) : b;
+				let curA = a;
+				let curB = b;
 
 				if (fffz.equals(curA, curB)) {
 					fffz.cmpStrengthCache.set(key, 0);
@@ -408,17 +407,6 @@
 				const isLimitB = isTrueLimit(curB);
 
 				if (isLimitA && isLimitB) {
-					const cmpCore = fffz.cmpStrength(curA.core, curB.core);
-					if (cmpCore !== 0) {
-						fffz.cmpStrengthCache.set(key, cmpCore);
-						return cmpCore;
-					}
-
-					if (fffz.mode === 'Actual' && curA.core.isSucc() && curB.core.isSucc()) {
-						fffz.cmpStrengthCache.set(key, 0);
-						return 0;
-					}
-
 					const valCmp = fffz.compare(curA, curB);
 					fffz.cmpStrengthCache.set(key, valCmp);
 					return valCmp;
@@ -431,19 +419,11 @@
 				};
 				let judgeA = getJudge(curA, isLimitA);
 				let judgeB = getJudge(curB, isLimitB);
-				if (fffz.mode === 'Actual') {
-					judgeA = fffz.fullUnnest(judgeA);
-					judgeB = fffz.fullUnnest(judgeB);
-				}
+				judgeA = fffz.fullUnnest(judgeA);
+				judgeB = fffz.fullUnnest(judgeB);
 				console.log('judge', judgeA.printNat(), judgeB.printNat());
 
 				let cmpJudge = fffz.cmpStrength(judgeA, judgeB);
-				if (cmpJudge === 0) {
-					const valCmp = fffz.compare(judgeA, judgeB);
-					if (valCmp !== 0) {
-						cmpJudge = valCmp;
-					}
-				}
 
 				let result;
 				if (cmpJudge !== 0) {
@@ -472,6 +452,8 @@
 					result = fffz.cmpStrength(newA, newB);
 				}
 
+				if (result === 0) result = fffz.compare(a, b);
+				console.log('cmpStrength:', key, result);
 				fffz.cmpStrengthCache.set(key, result);
 				return result;
 			}
@@ -630,7 +612,7 @@
 
 				let targetIndex = -1;
 				for (let i = fake.length - 2; i >= 0; i--) {
-					if (fffz.cmpStrength(fake[i], last) >= 0) {
+					if (fffz.cmpStrength(fffz.fullUnnest(fake[i]), fffz.fullUnnest(last)) >= 0) {
 						targetIndex = i;
 						break;
 					}
@@ -669,13 +651,6 @@
 						return false;
 					}
 				}
-				/*
-                let logstr = "found chain: "
-                for (let i = 0; i < newFake.length; i++) {
-                    logstr = logstr + newFake[i].printFancy() + "  ";
-                }
-                console.log(logstr);
-                */
 				return true;
 			}
 
@@ -701,9 +676,7 @@
 					} else {
 						judge = x.fake[x.fake.length - 1];
 					}
-					if (fffz.mode === 'Actual') {
-						judge = fffz.fullUnnest(judge);
-					}
+					judge = fffz.fullUnnest(judge);
 					return judge;
 				};
 
@@ -730,23 +703,10 @@
 					}
 				}
 
-				const isStrictlyStronger = (a, b) => {
-					let aa = a;
-					let bb = b;
-					if (fffz.mode === 'Actual') {
-						aa = fffz.fullUnnest(aa);
-						bb = fffz.fullUnnest(bb);
-					}
-					const cmp = fffz.cmpStrength(aa, bb);
-					if (cmp > 0) return true;
-					if (cmp === 0 && fffz.compare(aa, bb) > 0) return true;
-					return false;
-				};
-
 				const newSeq = items.map((item) => {
 					const isLimit = item.isLimit;
 					if (isLimit) {
-						if (isStrictlyStronger(minJudge, item.obj.core)) {
+						if (fffz.cmpStrength(minJudge, item.obj.core)) {
 							return item.obj.core;
 						} else {
 							return item.obj;
@@ -780,7 +740,6 @@
 					const prev = fake[i];
 					const next = fake[i + 1];
 					if (fffz.cmpStrength(prev, next) !== 1) return false;
-					if (fffz.mode === 'Actual' && prev.core.isSucc()) return false;
 				}
 				return true;
 			}
@@ -794,12 +753,8 @@
 				const n = fake.length;
 				const last = fake[n - 1];
 				for (let i = n - 3; i >= 0; i--) {
-					if (fffz.cmpStrength(fake[i], last) < 0) break;
-
-					const prefix = fake.slice(0, i + 2);
-					if (!fffz.isCompatible(prefix)) {
-						continue;
-					}
+					if (fffz.cmpStrength(fffz.fullUnnest(fake[i]), fffz.fullUnnest(last)) < 0)
+						break;
 
 					const left = fake[i];
 
@@ -862,14 +817,18 @@
 				else if (fake.length === 0) result = true;
 				else if (fake.some((x) => x.isZero)) result = false;
 				else if (fake.length === 1) result = true;
-				else if (!fffz.isNonDouble(fake)) result = false;
-				else if (!fffz.isNonRepel(fake)) result = false;
-				else if (fffz.isEndSucc(fake)) result = true;
-				else if (fffz.isCantorTrail(fake)) result = true;
-				else if (fffz.isUpProj(fake)) result = true;
-				else if (fffz.isDownProj(fake)) result = true;
-				else if (fffz.isTranslate(fake)) result = true;
-				else result = false;
+				else {
+					const prefix = fake.slice(0, -1);
+					if (!fffz.isCompatibleRaw(prefix)) result = false;
+					else if (!fffz.isNonDouble(fake)) result = false;
+					else if (!fffz.isNonRepel(fake)) result = false;
+					else if (fffz.isEndSucc(fake)) result = true;
+					else if (fffz.isCantorTrail(fake)) result = true;
+					else if (fffz.isUpProj(fake)) result = true;
+					else if (fffz.isDownProj(fake)) result = true;
+					else if (fffz.isTranslate(fake)) result = true;
+					else result = false;
+				}
 
 				if (!fffz.compatCache) fffz.compatCache = new Map();
 				fffz.compatCache.set(key, result);
