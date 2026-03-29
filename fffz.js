@@ -390,8 +390,8 @@
 					return 1;
 				}
 
-				let curA = fffz.fullUnnest(a);
-				let curB = fffz.fullUnnest(b);
+				let curA = fffz.mode === 'Actual' ? fffz.fullUnnest(a) : a;
+				let curB = fffz.mode === 'Actual' ? fffz.fullUnnest(b) : b;
 
 				if (fffz.equals(curA, curB)) {
 					fffz.cmpStrengthCache.set(key, 0);
@@ -429,11 +429,22 @@
 					if (isLimit) return x;
 					return x.fake[x.fake.length - 1];
 				};
-				const judgeA = getJudge(curA, isLimitA);
-				const judgeB = getJudge(curB, isLimitB);
+				let judgeA = getJudge(curA, isLimitA);
+				let judgeB = getJudge(curB, isLimitB);
+				if (fffz.mode === 'Actual') {
+					judgeA = fffz.fullUnnest(judgeA);
+					judgeB = fffz.fullUnnest(judgeB);
+				}
 				console.log('judge', judgeA.printNat(), judgeB.printNat());
 
-				const cmpJudge = fffz.cmpStrength(judgeA, judgeB);
+				let cmpJudge = fffz.cmpStrength(judgeA, judgeB);
+				if (cmpJudge === 0) {
+					const valCmp = fffz.compare(judgeA, judgeB);
+					if (valCmp !== 0) {
+						cmpJudge = valCmp;
+					}
+				}
+
 				let result;
 				if (cmpJudge !== 0) {
 					if (cmpJudge > 0) {
@@ -668,10 +679,20 @@
 				return true;
 			}
 
-			static isUpProj(fake) {
-				const key = fake.map((x) => x.printNat()).join(',');
-				console.log('isUpProj called on', key);
+			static isGE(a, b) {
+				let curA = a;
+				let curB = b;
+				if (fffz.mode === 'Actual') {
+					curA = fffz.fullUnnest(a);
+					curB = fffz.fullUnnest(b);
+				}
+				const cmp = fffz.cmpStrength(curA, curB);
+				if (cmp > 0) return true;
+				if (cmp === 0 && fffz.compare(curA, curB) > 0) return true;
+				return false;
+			}
 
+			static isUpProj(fake) {
 				if (!Array.isArray(fake) || fake.length === 0) return false;
 
 				const isTrueLimit = (x) => {
@@ -680,52 +701,88 @@
 					return fffz.isCompatible(candidate);
 				};
 
-				const getJudge = (x, isLimit) => {
-					if (isLimit && fffz.mode === 'Actual' && x.core.isSucc()) return fffz.omega;
-					if (isLimit) return x;
-					return x.fake[x.fake.length - 1];
-				};
-
 				const allLimit = fake.every((x) => isTrueLimit(x));
 				if (allLimit) {
 					const coreSeq = fake.map((x) => x.core);
 					return fffz.isCompatible(coreSeq);
 				}
 
-				const items = fake.map((x) => {
+				const getJudgeAndType = (x) => {
+					if (fffz.mode === 'Actual' && x.core.isSucc()) {
+						return { judge: fffz.omega, type: 'weak' };
+					}
 					const isLimit = isTrueLimit(x);
-					const judge = getJudge(x, isLimit);
-					return { isLimit, judge, obj: x };
+					if (!isLimit) {
+						const judge = x.fake[x.fake.length - 1];
+						return { judge, type: 'weak' };
+					} else {
+						if (x.isStrong()) {
+							return { judge: x, type: 'strong' };
+						}
+						const lastFake = x.fake[x.fake.length - 1];
+						const core = x.core;
+						if (fffz.isGE(lastFake, core)) {
+							return { judge: lastFake, type: 'weak' };
+						} else {
+							return { judge: x, type: 'strong' };
+						}
+					}
+				};
+
+				const items = fake.map((x) => {
+					const { judge, type } = getJudgeAndType(x);
+					let finalJudge = judge;
+					if (fffz.mode === 'Actual' && !fffz.equals(judge, fffz.omega)) {
+						finalJudge = fffz.fullUnnest(judge);
+					}
+					return { obj: x, type, judge: finalJudge };
 				});
 
-				const nonLimitItems = items.filter((item) => !item.isLimit);
-				const limitItems = items.filter((item) => item.isLimit);
-
-				let nonLimitJudge = null;
-				for (const item of nonLimitItems) {
-					if (nonLimitJudge === null) {
-						nonLimitJudge = item.judge;
-					} else if (fffz.cmpStrength(nonLimitJudge, item.judge) !== 0) {
-						return false;
-					}
-				}
-
-				if (nonLimitItems.length > 0) {
-					const baseStrength = nonLimitJudge;
-					for (const item of limitItems) {
-						if (fffz.cmpStrength(item.judge, baseStrength) < 0) {
-							return false;
+				let minJudge = null;
+				for (const item of items) {
+					if (minJudge === null) {
+						minJudge = item.judge;
+					} else {
+						const cmp = fffz.cmpStrength(item.judge, minJudge);
+						if (cmp < 0) {
+							minJudge = item.judge;
+						} else if (cmp === 0) {
+							const valCmp = fffz.compare(item.judge, minJudge);
+							if (valCmp < 0) {
+								minJudge = item.judge;
+							}
 						}
 					}
 				}
 
-				const extracted = items.map((item) => {
-					const condition =
-						!item.isLimit || (fffz.mode === 'Actual' && item.obj.core.isSucc());
-					return condition ? item.obj.core : item.obj;
-				});
+				const newSeq = [];
+				for (const item of items) {
+					if (item.type === 'strong') {
+						if (fffz.isGE(minJudge, item.obj.core)) {
+							return false;
+						} else {
+							newSeq.push(item.obj);
+						}
+					} else {
+						const cmp = fffz.cmpStrength(item.judge, minJudge);
+						if (cmp === 0 && fffz.compare(item.judge, minJudge) === 0) {
+							newSeq.push(item.obj.core);
+						} else {
+							newSeq.push(item.obj);
+						}
+					}
+				}
 
-				return fffz.isCompatible(extracted);
+				let identical = true;
+				for (let i = 0; i < newSeq.length; i++) {
+					if (!fffz.equals(newSeq[i], fake[i])) {
+						identical = false;
+						break;
+					}
+				}
+				if (identical) return false;
+
+				return fffz.isCompatible(newSeq);
 			}
 
 			static isDownProj(fake) {
@@ -750,6 +807,11 @@
 				const last = fake[n - 1];
 				for (let i = n - 3; i >= 0; i--) {
 					if (fffz.cmpStrength(fake[i], last) < 0) break;
+
+					const prefix = fake.slice(0, i + 2);
+					if (!fffz.isCompatible(prefix)) {
+						continue;
+					}
 
 					const left = fake[i];
 
@@ -810,7 +872,7 @@
 				let result = false;
 				if (!Array.isArray(fake)) result = false;
 				else if (fake.length === 0) result = true;
-				else if (fake[0].isZero) result = false;
+				else if (fake.some((x) => x.isZero)) result = false;
 				else if (fake.length === 1) result = true;
 				else if (!fffz.isNonDouble(fake)) result = false;
 				else if (!fffz.isNonRepel(fake)) result = false;
