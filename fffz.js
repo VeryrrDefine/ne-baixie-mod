@@ -679,19 +679,6 @@
 				return true;
 			}
 
-			static isGE(a, b) {
-				let curA = a;
-				let curB = b;
-				if (fffz.mode === 'Actual') {
-					curA = fffz.fullUnnest(a);
-					curB = fffz.fullUnnest(b);
-				}
-				const cmp = fffz.cmpStrength(curA, curB);
-				if (cmp > 0) return true;
-				if (cmp === 0 && fffz.compare(curA, curB) > 0) return true;
-				return false;
-			}
-
 			static isUpProj(fake) {
 				if (!Array.isArray(fake) || fake.length === 0) return false;
 
@@ -707,35 +694,23 @@
 					return fffz.isCompatible(coreSeq);
 				}
 
-				const getJudgeAndType = (x) => {
-					if (fffz.mode === 'Actual' && x.core.isSucc()) {
-						return { judge: fffz.omega, type: 'weak' };
-					}
-					const isLimit = isTrueLimit(x);
-					if (!isLimit) {
-						const judge = x.fake[x.fake.length - 1];
-						return { judge, type: 'weak' };
+				const getJudge = (x, isLimit) => {
+					let judge;
+					if (isLimit) {
+						judge = x;
 					} else {
-						if (x.isStrong()) {
-							return { judge: x, type: 'strong' };
-						}
-						const lastFake = x.fake[x.fake.length - 1];
-						const core = x.core;
-						if (fffz.isGE(lastFake, core)) {
-							return { judge: lastFake, type: 'weak' };
-						} else {
-							return { judge: x, type: 'strong' };
-						}
+						judge = x.fake[x.fake.length - 1];
 					}
+					if (fffz.mode === 'Actual') {
+						judge = fffz.fullUnnest(judge);
+					}
+					return judge;
 				};
 
 				const items = fake.map((x) => {
-					const { judge, type } = getJudgeAndType(x);
-					let finalJudge = judge;
-					if (fffz.mode === 'Actual' && !fffz.equals(judge, fffz.omega)) {
-						finalJudge = fffz.fullUnnest(judge);
-					}
-					return { obj: x, type, judge: finalJudge };
+					const isLimit = isTrueLimit(x);
+					const judge = getJudge(x, isLimit);
+					return { obj: x, isLimit, judge };
 				});
 
 				let minJudge = null;
@@ -755,23 +730,36 @@
 					}
 				}
 
-				const newSeq = [];
-				for (const item of items) {
-					if (item.type === 'strong') {
-						if (fffz.isGE(minJudge, item.obj.core)) {
-							return false;
+				const isStrictlyStronger = (a, b) => {
+					let aa = a;
+					let bb = b;
+					if (fffz.mode === 'Actual') {
+						aa = fffz.fullUnnest(aa);
+						bb = fffz.fullUnnest(bb);
+					}
+					const cmp = fffz.cmpStrength(aa, bb);
+					if (cmp > 0) return true;
+					if (cmp === 0 && fffz.compare(aa, bb) > 0) return true;
+					return false;
+				};
+
+				const newSeq = items.map((item) => {
+					const isLimit = item.isLimit;
+					if (isLimit) {
+						if (isStrictlyStronger(minJudge, item.obj.core)) {
+							return item.obj.core;
 						} else {
-							newSeq.push(item.obj);
+							return item.obj;
 						}
 					} else {
 						const cmp = fffz.cmpStrength(item.judge, minJudge);
 						if (cmp === 0 && fffz.compare(item.judge, minJudge) === 0) {
-							newSeq.push(item.obj.core);
+							return item.obj.core;
 						} else {
-							newSeq.push(item.obj);
+							return item.obj;
 						}
 					}
-				}
+				});
 
 				let identical = true;
 				for (let i = 0; i < newSeq.length; i++) {
@@ -1229,7 +1217,13 @@
 			}
 
 			static readFancy(str) {
-				str = str.replace(/w/g, 'ω').replace(/e/g, 'ε');
+				str = str
+					.replace(/z/g, 'Z')
+					.replace(/w/g, 'ω')
+					.replace(/e/g, 'ε')
+					.replace(/×/g, '*')
+					.replace(/p/g, '')
+					.replace(/ψ/g, '');
 
 				if (str === 'ε_0' || str === 'ε0') {
 					return fffz.epZero;
@@ -1286,32 +1280,55 @@
 					}
 
 					function parseZ() {
-						if (str[i] !== 'Z') throw new Error('parse: Expected Z at ' + i);
+						if (str[i] !== 'Z') throw new Error('Expected Z at ' + i);
 						i++;
 						skip();
-						if (str[i] !== '[') throw new Error('parse: Expected [ at ' + i);
-						i++;
-						let arr = [];
-						skip();
-						if (str[i] !== ']') {
-							while (true) {
-								let item = parseElement();
-								arr.push(item);
-								skip();
-								if (str[i] === ',') {
-									i++;
-									continue;
+						let fake = [];
+						let core = null;
+
+						if (str[i] === '[') {
+							i++;
+							let arr = [];
+							skip();
+							if (str[i] !== ']') {
+								while (true) {
+									let item = parseElement();
+									arr.push(item);
+									skip();
+									if (str[i] === ',') {
+										i++;
+										continue;
+									}
+									break;
 								}
-								break;
 							}
+							if (str[i] !== ']') throw new Error('Expected ] at ' + i);
+							i++;
+							skip();
+							if (str[i] === '(') {
+								i++;
+								core = parseElement();
+								skip();
+								if (str[i] !== ')') throw new Error('Expected ) at ' + i);
+								i++;
+								fake = arr;
+							} else {
+								if (arr.length === 0)
+									throw new Error('Z[] is invalid (missing core)');
+								fake = arr.slice(0, -1);
+								core = arr[arr.length - 1];
+							}
+						} else if (str[i] === '(') {
+							i++;
+							core = parseElement();
+							skip();
+							if (str[i] !== ')') throw new Error('Expected ) at ' + i);
+							i++;
+							fake = [];
+						} else {
+							throw new Error('Expected [ or ( after Z at ' + i);
 						}
-						if (str[i] !== ']') throw new Error('parse: Expected ] at ' + i);
-						i++;
-						if (arr.length === 0) {
-							throw new Error('parse: Z[] missing core at ' + (i - 3));
-						}
-						const core = arr[arr.length - 1];
-						const fake = arr.slice(0, arr.length - 1);
+
 						return new fffz(fake, core, false);
 					}
 
