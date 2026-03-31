@@ -282,6 +282,12 @@
 				return this.fake.length === 0;
 			}
 
+			static isTrueLimit(x) {
+				if (x.isStrong()) return true;
+				const candidate = [...x.fake, x.core];
+				return fffz.isCompatible(candidate);
+			}
+
 			isSucc() {
 				if (this.isZero) return true;
 
@@ -368,109 +374,156 @@
 				return cur;
 			}
 
+			static timesOmega(x) {
+				const y = fffz.fullUnnest(x);
+				if (y.isZero) {
+					return fffz.zero();
+				} else if (y.isSucc()) {
+					return fffz.omega;
+				} else {
+					return new fffz(y.fake, y.core.succ(), false);
+				}
+			}
+
+			static divideOmega(x) {
+				const y = fffz.fullUnnest(x);
+				if (y.isZero) {
+					return fffz.zero();
+				} else if (y.isSucc()) {
+					return fffz.zero();
+				} else {
+					return new fffz(y.fake, y.core.prev(), false);
+				}
+			}
+
+			static getTailChain(x) {
+				const y = fffz.fullUnnest(x);
+				if (y.isStrong()) return [];
+
+				const unnestedFake = y.fake.map((f) => fffz.fullUnnest(f));
+				if (unnestedFake.length === 0) return [];
+
+				let chain = [unnestedFake[unnestedFake.length - 1]];
+
+				for (let i = unnestedFake.length - 2; i >= 0; i--) {
+					const current = unnestedFake[i];
+					const next = chain[0];
+
+					if (fffz.isLess(current, next)) {
+						chain.unshift(current);
+					} else {
+						break;
+					}
+				}
+				return chain;
+			}
+
+			static getJudgeChain(x) {
+				const tail = fffz.getTailChain(x);
+				const candidateCore = fffz.timesOmega(x.core);
+				const candidateFake = [...tail, candidateCore];
+
+				let prelimFake = tail;
+				if (fffz.isCompatible(candidateFake)) {
+					prelimFake = candidateFake;
+				}
+
+				let chain = [];
+				if (prelimFake.length > 0) {
+					chain = prelimFake.slice(0, -1);
+					chain.push(fffz.divideOmega(prelimFake[prelimFake.length - 1]));
+				}
+
+				if (chain.length === 0) return [];
+
+				let result = [chain[chain.length - 1]];
+				for (let i = chain.length - 2; i >= 0; i--) {
+					const current = chain[i];
+					const next = result[0];
+
+					if (!fffz.isLess(next, current)) {
+						result.unshift(current);
+					} else {
+						break;
+					}
+				}
+
+				return result;
+			}
+
+			static cmpChain(chainA, chainB) {
+				const minLen = Math.min(chainA.length, chainB.length);
+				for (let i = 0; i < minLen; i++) {
+					const cmp = fffz.compare(chainA[i], chainB[i]);
+					if (cmp !== 0) {
+						return cmp;
+					}
+				}
+
+				if (chainA.length === chainB.length) return 0;
+				return chainA.length < chainB.length ? 1 : -1;
+			}
+
+			static cmpChainStrength(chainA, chainB) {
+				console.log(
+					'cmpChainStrength:',
+					chainA.map((x) => x.printFancy()).join(','),
+					chainB.map((x) => x.printFancy()).join(','),
+				);
+				const minLen = Math.min(chainA.length, chainB.length);
+				for (let i = 0; i < minLen; i++) {
+					const cmp = fffz.cmpStrength(chainA[i], chainB[i]);
+					if (cmp !== 0) {
+						return cmp;
+					}
+				}
+
+				if (chainA.length === chainB.length) return 0;
+				return chainA.length < chainB.length ? 1 : -1;
+			}
+
 			static cmpStrengthCache = new Map();
 
 			static cmpStrength(a, b) {
+				if (a.isSucc() && b.isSucc()) return fffz.compare(a, b);
+				if (a.isSucc()) return -1;
+				if (b.isSucc()) return 1;
+
 				const key = `${fffz.mode} ${a.printNat()} ${b.printNat()}`;
 				if (fffz.cmpStrengthCache.has(key)) {
 					return fffz.cmpStrengthCache.get(key);
 				}
 
-				if (a.isZero && b.isZero) {
-					fffz.cmpStrengthCache.set(key, 0);
-					return 0;
-				}
-				if (a.isZero) {
-					fffz.cmpStrengthCache.set(key, -1);
-					return -1;
-				}
-				if (b.isZero) {
-					fffz.cmpStrengthCache.set(key, 1);
-					return 1;
-				}
-
-				let curA = a;
-				let curB = b;
-
-				if (fffz.equals(curA, curB)) {
-					fffz.cmpStrengthCache.set(key, 0);
-					return 0;
-				}
-
-				function isTrueLimit(x) {
-					if (x.isStrong()) return true;
-					const candidate = [...x.fake, x.core];
-					return fffz.isCompatible(candidate);
-				}
-
-				const isLimitA = isTrueLimit(curA);
-				const isLimitB = isTrueLimit(curB);
-
-				if (isLimitA && isLimitB) {
-					const valCmp = fffz.compare(curA, curB);
-					fffz.cmpStrengthCache.set(key, valCmp);
-					return valCmp;
-				}
-
-				const getJudge = (x, isLimit) => {
-					if (isLimit && fffz.mode === 'Actual' && x.core.isSucc()) return fffz.omega;
-					if (isLimit) return x;
-					return x.fake[x.fake.length - 1];
-				};
-				let judgeA = getJudge(curA, isLimitA);
-				let judgeB = getJudge(curB, isLimitB);
-				judgeA = fffz.fullUnnest(judgeA);
-				judgeB = fffz.fullUnnest(judgeB);
-				console.log('judge', judgeA.printNat(), judgeB.printNat());
-
-				let cmpJudge = fffz.cmpStrength(judgeA, judgeB);
-
 				let result;
-				if (cmpJudge !== 0) {
-					if (cmpJudge > 0) {
-						const newB = curB.core;
-						result = fffz.cmpStrength(curA, newB);
-					} else {
-						const newA = curA.core;
-						result = fffz.cmpStrength(newA, curB);
-					}
+
+				const judgeA = fffz.getJudgeChain(a);
+				const judgeB = fffz.getJudgeChain(b);
+
+				const chainCmp = fffz.cmpChainStrength(judgeA, judgeB);
+
+				if (chainCmp === 0) {
+					result = fffz.cmpStrength(a.core, b.core);
 				} else {
-					let newA = curA;
-					let newB = curB;
-
-					if (!isLimitA || (fffz.mode === 'Actual' && curA.core.isSucc()))
-						newA = curA.core;
-					if (!isLimitB || (fffz.mode === 'Actual' && curB.core.isSucc()))
-						newB = curB.core;
-
-					const newFakeA = [newA, fffz.add(newA, newB)];
-					const newFakeB = [newB, fffz.add(newB, newA)];
-					const compatA = fffz.isCompatible(newFakeA);
-					const compatB = fffz.isCompatible(newFakeB);
-					if (compatA && !compatB) return 1;
-					if (!compatA && compatB) return -1;
-					result = fffz.cmpStrength(newA, newB);
+					result = chainCmp;
 				}
 
 				if (result === 0) result = fffz.compare(a, b);
-				console.log('cmpStrength:', key, result);
+
+				const logstr = `${fffz.mode} ${a.printFancy()} ${b.printFancy()}`;
+				console.log('cmpStrength:', logstr, 'result:', result);
 				fffz.cmpStrengthCache.set(key, result);
 				return result;
 			}
 
 			static unnest(a) {
 				if (a.isZero) return fffz.zero();
-
 				if (a.isStrong()) return fffz.zero();
 
-				const candidateCore = a.core.succ();
-				const candidateFake = [...a.fake, candidateCore];
-
-				if (fffz.isCompatibleRaw(candidateFake)) {
-					return fffz.zero();
+				const lastFake = a.fake[a.fake.length - 1];
+				if (lastFake.isSucc()) {
+					return a.core;
 				}
-
-				return a.core;
+				return fffz.zero();
 			}
 
 			static fullUnnest(a) {
@@ -594,35 +647,17 @@
 			}
 
 			static isNonDouble(fake) {
-				//const key = fake.map(x => x.printFancy()).join(',');
-				//console.log("isNonDouble called on", key);
-
 				if (!Array.isArray(fake) || fake.length < 2) return true;
-				const last = fake[fake.length - 1];
-				const secondLast = fake[fake.length - 2];
-				return !(secondLast.isSucc() && last.isSucc());
-			}
 
-			static isNonRepel(fake) {
-				//const key = fake.map(x => x.printFancy()).join(',');
-				//console.log("isNonRepel called on", key);
+				const n = fake.length;
+				const secondLast = fake[n - 2];
+				const last = fake[n - 1];
 
-				if (!Array.isArray(fake) || fake.length <= 2) return true;
-				const last = fake[fake.length - 1];
-
-				let targetIndex = -1;
-				for (let i = fake.length - 2; i >= 0; i--) {
-					if (fffz.cmpStrength(fffz.fullUnnest(fake[i]), fffz.fullUnnest(last)) >= 0) {
-						targetIndex = i;
-						break;
-					}
+				if (fffz.equals(secondLast, last)) {
+					return false;
 				}
-				if (targetIndex === -1) return true;
 
-				const aFull = fffz.fullUnnest(fake[targetIndex]);
-				const bFull = fffz.fullUnnest(last);
-				const newFake = [aFull, fffz.add(aFull, bFull)];
-				return fffz.isCompatible(newFake);
+				return true;
 			}
 
 			static isEndSucc(fake) {
@@ -655,91 +690,123 @@
 			}
 
 			static isUpProj(fake) {
-				if (!Array.isArray(fake) || fake.length === 0) return false;
+				if (!Array.isArray(fake) || fake.length < 2) return false;
 
-				const isTrueLimit = (x) => {
-					if (x.isStrong()) return true;
-					const candidate = [...x.fake, x.core];
-					return fffz.isCompatible(candidate);
-				};
+				const judges = fake.map((x) => fffz.getJudgeChain(x));
 
-				const allLimit = fake.every((x) => isTrueLimit(x));
-				if (allLimit) {
-					const coreSeq = fake.map((x) => x.core);
-					return fffz.isCompatible(coreSeq);
-				}
+				console.log('UpProj Input:', fake.map((x) => x.printFancy()).join(','));
+				console.log(
+					'UpProj Judges:',
+					judges.map((j) => j.map((x) => x.printFancy()).join(',')).join(' | '),
+				);
 
-				const getJudge = (x, isLimit) => {
-					let judge;
-					if (isLimit) {
-						judge = x;
-					} else {
-						judge = x.fake[x.fake.length - 1];
-					}
-					judge = fffz.fullUnnest(judge);
-					return judge;
-				};
-
-				const items = fake.map((x) => {
-					const isLimit = isTrueLimit(x);
-					const judge = getJudge(x, isLimit);
-					return { obj: x, isLimit, judge };
-				});
-
-				let minJudge = null;
-				for (const item of items) {
-					if (minJudge === null) {
-						minJudge = item.judge;
-					} else {
-						const cmp = fffz.cmpStrength(item.judge, minJudge);
-						if (cmp < 0) {
-							minJudge = item.judge;
-						} else if (cmp === 0) {
-							const valCmp = fffz.compare(item.judge, minJudge);
-							if (valCmp < 0) {
-								minJudge = item.judge;
-							}
-						}
+				let minIndex = 0;
+				for (let i = 1; i < judges.length; i++) {
+					const cmp = fffz.cmpChain(judges[i], judges[minIndex]);
+					if (cmp < 0) {
+						minIndex = i;
 					}
 				}
+				const weakestJudge = judges[minIndex];
+				console.log('Weakest Judge:', weakestJudge.map((x) => x.printFancy()).join(','));
 
-				const newSeq = items.map((item) => {
-					const isLimit = item.isLimit;
-					if (isLimit) {
-						if (fffz.cmpStrength(minJudge, item.obj.core)) {
-							return item.obj.core;
-						} else {
-							return item.obj;
-						}
-					} else {
-						const cmp = fffz.cmpStrength(item.judge, minJudge);
-						if (cmp === 0 && fffz.compare(item.judge, minJudge) === 0) {
-							return item.obj.core;
-						} else {
-							return item.obj;
-						}
+				const isSuffix = (list, suffix) => {
+					if (list.length < suffix.length) return false;
+					const diff = list.length - suffix.length;
+					for (let k = 0; k < suffix.length; k++) {
+						if (!fffz.equals(list[diff + k], suffix[k])) return false;
 					}
+					return true;
+				};
+
+				const seq1 = fake.map((item, i) => {
+					const cmp = fffz.cmpChain(judges[i], weakestJudge);
+					return cmp === 0 ? item.core : item;
 				});
 
-				let identical = true;
-				for (let i = 0; i < newSeq.length; i++) {
-					if (!fffz.equals(newSeq[i], fake[i])) {
-						identical = false;
+				if (fffz.isCompatible(seq1)) {
+					console.log('UpProj: Normal check passed');
+					return true;
+				}
+
+				if (weakestJudge.length > 1) {
+					const weakestChopped = weakestJudge.slice(0, -1);
+
+					const seq2 = fake.map((item, i) => {
+						const choppedJudge = judges[i].slice(0, -1);
+						if (isSuffix(choppedJudge, weakestChopped)) {
+							return item.core;
+						} else {
+							return item;
+						}
+					});
+
+					if (fffz.isCompatible(seq2)) {
+						console.log('UpProj: Suffix check passed');
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+			static majorCore(x) {
+				let current = fffz.fullUnnest(x);
+
+				let result = fffz.strongCore(current);
+				while (!current.isStrong()) {
+					const lastFake = current.fake[current.fake.length - 1];
+					const coreItem = current.core;
+
+					const lastFakeUnnested = fffz.fullUnnest(lastFake);
+					const coreUnnested = fffz.fullUnnest(coreItem);
+
+					if (fffz.compare(lastFakeUnnested, coreUnnested) > 0) {
+						result = current;
 						break;
 					}
-				}
-				if (identical) return false;
 
-				return fffz.isCompatible(newSeq);
+					current = fffz.fullUnnest(current.core);
+				}
+				return result;
+			}
+
+			static isLimitDesc(fake) {
+				if (!Array.isArray(fake) || fake.length !== 2) return false;
+				if (fake.some((x) => x.isZero)) return false;
+
+				if (fffz.cmpStrength(fake[0], fake[1]) >= 0) {
+					return false;
+				}
+
+				const result1 = fffz.majorCore(fake[0]);
+
+				if (fffz.mode === 'Actual' && fffz.cmpStrength(result1, fffz.epZero) < 0) {
+					return false;
+				}
+
+				const result2 = fffz.majorCore(fake[1]);
+
+				console.log('majorCore', result1.printFancy(), result2.printFancy());
+
+				if (fffz.cmpStrength(result1, result2) > 0) {
+					return true;
+				}
+
+				if (fffz.compare(result1, result2) > 0) {
+					return true;
+				}
+
+				return false;
 			}
 
 			static isDownProj(fake) {
 				if (!Array.isArray(fake) || fake.length < 2) return false;
 
 				for (let i = 0; i < fake.length - 1; i++) {
-					const prev = fake[i];
-					const next = fake[i + 1];
-					if (fffz.cmpStrength(prev, next) !== 1) return false;
+					if (!fffz.isLimitDesc([fake[i], fake[i + 1]])) {
+						return false;
+					}
 				}
 				return true;
 			}
@@ -752,29 +819,31 @@
 
 				const n = fake.length;
 				const last = fake[n - 1];
+
 				for (let i = n - 3; i >= 0; i--) {
-					if (fffz.cmpStrength(fffz.fullUnnest(fake[i]), fffz.fullUnnest(last)) < 0)
-						break;
+					const newFake = fake.slice(i + 1, n);
+					if (!fffz.isCompatible(newFake)) continue;
+					const prevFake = [fake[i], fake[i + 1]],
+						nextFake = [fake[i + 1], fake[i + 2]];
 
-					const left = fake[i];
+					const lastItem = newFake[newFake.length - 1];
 
-					const newFake = [];
-					for (let j = i + 1; j < n; j++) {
-						const transformed = fffz.fullPeel(left, fake[j]);
-						newFake.push(transformed);
+					if (fffz.isCantorTrail(prevFake)) {
+						if (fffz.isCantorTrail(prevFake) && fffz.isCantorTrail(nextFake)) continue;
+						console.log('cantor translate', i);
+						return true;
 					}
-					if (fffz.isCompatible(newFake)) {
-						/*
-                        let logstr = "";
-                        for (let k = 0; k < fake.length; k++) {
-                            logstr = logstr + fake[k].printFancy() + "  ";
-                        }
-                        let newstr = "";
-                        for (let k = 0; k < newFake.length; k++) {
-                            newstr = newstr + newFake[k].printFancy() + "  ";
-                        }
-                        console.log(logstr + "translate from", i + 1, "as", newstr);
-                        */
+
+					const prefix = fake.slice(0, i + 1);
+					const sequenceToCheck = [...prefix, lastItem];
+
+					if (fffz.isCompatible(sequenceToCheck)) {
+						console.log(
+							'compat translate',
+							i,
+							prefix.map((x) => x.printFancy()).join(' '),
+							lastItem.printFancy(),
+						);
 						return true;
 					}
 				}
@@ -784,25 +853,8 @@
 			static compatCache = new Map();
 
 			static normalizeFake(fake) {
-				if (!Array.isArray(fake) || fake.length === 0) return fake;
-				const result = [];
-				for (let i = 0; i < fake.length; i++) {
-					let cur = fake[i];
-					if (i === 0) {
-						cur = fffz.fullUnnest(cur);
-					} else {
-						const prev = result[i - 1];
-						while (true) {
-							const next = fffz.unnest(cur);
-							if (next.isZero || fffz.isLess(next, prev)) {
-								break;
-							}
-							cur = next;
-						}
-					}
-					result.push(cur);
-				}
-				return result;
+				if (!Array.isArray(fake)) return fake;
+				return fake.map((x) => fffz.fullUnnest(x));
 			}
 
 			static isCompatibleRaw(fake) {
@@ -811,28 +863,47 @@
 					//console.log("compat cache hit:", key);
 					return fffz.compatCache.get(key);
 				}
+				const logstr = fffz.mode + ' ' + fake.map((x) => x.printFancy()).join(',');
+				console.log('new sequence:', logstr);
 
 				let result = false;
+				let reason = 'basic';
 				if (!Array.isArray(fake)) result = false;
 				else if (fake.length === 0) result = true;
 				else if (fake.some((x) => x.isZero)) result = false;
 				else if (fake.length === 1) result = true;
 				else {
 					const prefix = fake.slice(0, -1);
-					if (!fffz.isCompatibleRaw(prefix)) result = false;
-					else if (!fffz.isNonDouble(fake)) result = false;
-					else if (!fffz.isNonRepel(fake)) result = false;
-					else if (fffz.isEndSucc(fake)) result = true;
-					else if (fffz.isCantorTrail(fake)) result = true;
-					else if (fffz.isUpProj(fake)) result = true;
-					else if (fffz.isDownProj(fake)) result = true;
-					else if (fffz.isTranslate(fake)) result = true;
-					else result = false;
+					if (!fffz.isCompatibleRaw(prefix)) {
+						result = false;
+						reason = 'prefix';
+					} else if (!fffz.isNonDouble(fake)) {
+						result = false;
+						reason = 'double';
+					} else if (fffz.isEndSucc(fake)) {
+						result = true;
+						reason = 'endsucc';
+					} else if (fffz.isCantorTrail(fake)) {
+						result = true;
+						reason = 'cantortrail';
+					} else if (fffz.isUpProj(fake)) {
+						result = true;
+						reason = 'upproj';
+					} else if (fffz.isDownProj(fake)) {
+						result = true;
+						reason = 'downproj';
+					} else if (fffz.isTranslate(fake)) {
+						result = true;
+						reason = 'translate';
+					} else {
+						result = false;
+						reason = 'none';
+					}
 				}
 
 				if (!fffz.compatCache) fffz.compatCache = new Map();
 				fffz.compatCache.set(key, result);
-				console.log('new sequence:', key, 'result:', result);
+				console.log('new sequence:', logstr, 'result:', result, reason);
 				return result;
 			}
 
