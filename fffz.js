@@ -1327,44 +1327,44 @@
 				res += `(${inner.at(-1)})`;
 				return res;
 			}
-
-			printpsiZ(mode2 = 0) {
-				if (this.isZero) return '0';
-
-				if (fffz.equals(this, fffz.epZero)) return 'ε_0';
-				if (fffz.isLess(this, fffz.epZero)) {
-					const ord = fffz.fffzToOrdinal(this);
-					if (ord !== null) {
-						return Ordinal.printStr(ord);
-					}
-				}
-
-				const arr = [...this.fake, this.core];
-
-				const inner = arr.map((x) => x.printpsiZ());
-
-				// const dataset2 = s[mode2 == 1 ? 'fffz0052strong2' : 'fffz0052'];
-				// const inner = arr.map((x) => {
-				// 	let fancy2 = x.printFancy();
-				// 	return dataset2[fancy2] && dataset2[fancy2] !== '???'
-				// 		? dataset2[fancy2]
-				// 		: x.printpsiZ(mode2);
-				// });
-				if (inner.length == 1) {
-					return `ψZ(${inner[0]})`;
-				}
-				let res = 'ψZ[';
-				for (let i = 0; i < inner.length - 1; i++) {
-					res += inner[i];
-					if (i + 1 != inner.length - 1) {
-						res += ',';
-					}
-				}
-				res += ']';
-				res += `(${inner.at(-1)})`;
-				return res;
-			}
 		}
+
+		fffz.prototype.printpsiZ = function (mode2 = 0) {
+			if (this.isZero) return '0';
+
+			if (fffz.equals(this, fffz.epZero)) return 'ε_0';
+			if (fffz.isLess(this, fffz.epZero)) {
+				const ord = fffz.fffzToOrdinal(this);
+				if (ord !== null) {
+					return Ordinal.printStr(ord);
+				}
+			}
+
+			const arr = [...this.fake, this.core];
+
+			const inner = arr.map((x) => x.printpsiZ());
+
+			// const dataset2 = s[mode2 == 1 ? 'fffz0052strong2' : 'fffz0052'];
+			// const inner = arr.map((x) => {
+			// 	let fancy2 = x.printFancy();
+			// 	return dataset2[fancy2] && dataset2[fancy2] !== '???'
+			// 		? dataset2[fancy2]
+			// 		: x.printpsiZ(mode2);
+			// });
+			if (inner.length == 1) {
+				return `ψZ(${inner[0]})`;
+			}
+			let res = 'ψZ[';
+			for (let i = 0; i < inner.length - 1; i++) {
+				res += inner[i];
+				if (i + 1 != inner.length - 1) {
+					res += ',';
+				}
+			}
+			res += ']';
+			res += `(${inner.at(-1)})`;
+			return res;
+		};
 		return { Ordinal, fffz };
 	}
 	const actual = dwaFFFZ('Actual');
