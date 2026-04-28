@@ -47,6 +47,7 @@ html{
    background-color: #000;
    color: #888;
    border-style: none;
+   user-select: none;
 }
 
 .d{
